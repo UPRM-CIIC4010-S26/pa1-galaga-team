@@ -16,15 +16,14 @@ Program::Program() {
             new SpEnemy(600, 150)
         });
 
-    for (int i = 0; i < 30; i++) {
-        float x = 250 + 50 * i;
-        float y = 200 + 50 * i;
+   for (int i = 0; i < 30; i++) {
+    float x = 250 + 50 * (i % 10);
+    float y = 200 + 50 * (i / 10);
 
-        Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
-            std::pair<float, float>{x, y}, 
-            new StdEnemy(x, y)
-        });
-    }
+    Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+        std::pair<float, float>{x, y}, 
+        new StdEnemy(x, y)
+    }); }
 }
 
 void Program::Update() {
@@ -52,13 +51,18 @@ void Program::Update() {
                 p.second->health = 0;
                 pauseFrames = 120;
                 lives--;
+                break;
             }
         }
 
         for (Projectile& p : Projectile::projectiles) { 
-            p.update(); 
+    p.update();
 
-        }
+    if (p.ID != 0 && HitBox::Collision(player->hitBox, p.getHitBox())) {
+        PlayerReset();
+        break;
+    }
+}
 
         if (lives <= 0 && pauseFrames <= 0) gameOver = true;
         Projectile::CleanProjectiles();
@@ -187,4 +191,24 @@ void Program::Reset() {
     count = 0;
     delay = 0;
     lives = 3;
+
+    Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+            std::pair<float, float>{350, 150}, 
+            new SpEnemy(350, 150)
+        });
+
+    Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+            std::pair<float, float>{600, 150}, 
+            new SpEnemy(600, 150)
+        });
+
+    for (int i = 0; i < 30; i++) {
+        float x = 250 + 50 * (i % 10);
+        float y = 200 + 50 * (i / 10);
+
+        Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+            std::pair<float, float>{x, y}, 
+            new StdEnemy(x, y)
+        });
+    }
 }
