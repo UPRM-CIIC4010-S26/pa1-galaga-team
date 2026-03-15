@@ -3,9 +3,9 @@
 
 void DyEnemy::draw() {
     if (HitBox::drawHitbox) this->hitBox.draw();
-    DrawTexturePro(ImageManager::SpriteSheet, this->spriteRec, 
-            Rectangle{this->position.first + 15, this->position.second + 15, 30, 30}, 
-            Vector2{15, 15}, this->aimAngle, WHITE);
+    DrawTexturePro(ImageManager::SpriteSheet, this->spriteRec,
+    Rectangle{this->position.first + 15, this->position.second + 15, 30, 30},
+    Vector2{15, 15}, this->aimAngle, WHITE);
 }
 
 void DyEnemy::update(std::pair<float, float> pos, HitBox target) {
