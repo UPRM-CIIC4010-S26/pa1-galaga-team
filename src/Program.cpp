@@ -16,15 +16,14 @@ Program::Program() {
             new SpEnemy(600, 150)
         });
 
-    for (int i = 0; i < 30; i++) {
-        float x = 250 + 50 * i;
-        float y = 200 + 50 * i;
+   for (int i = 0; i < 30; i++) {
+    float x = 250 + 50 * (i % 10);
+    float y = 200 + 50 * (i / 10);
 
-        Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
-            std::pair<float, float>{x, y}, 
-            new StdEnemy(x, y)
-        });
-    }
+    Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+        std::pair<float, float>{x, y}, 
+        new StdEnemy(x, y)
+    }); }
 }
 
 void Program::Update() {
@@ -37,6 +36,7 @@ void Program::Update() {
     if (!startup && !paused && !gameOver && pauseFrames <= 0) {
         Enemy::ManageEnemies(player->hitBox);
         StdEnemy::attackReset();
+        ManageEnemyDeath();
         ManageEnemyRespawns();
         player->update();
 
@@ -52,13 +52,21 @@ void Program::Update() {
                 p.second->health = 0;
                 pauseFrames = 120;
                 lives--;
+                break;
             }
         }
 
         for (Projectile& p : Projectile::projectiles) { 
-            p.update(); 
+    p.update();
 
-        }
+    if (p.ID != 0 && HitBox::Collision(player->hitBox, p.getHitBox())) {
+        PlayerReset();
+        break;
+    }
+
+
+
+}
 
         if (lives <= 0 && pauseFrames <= 0) gameOver = true;
         Projectile::CleanProjectiles();
@@ -80,18 +88,43 @@ void Program::Draw() {
 
     for (Projectile p : Projectile::projectiles) p.draw();
     for (std::pair<std::pair<float, float>, Enemy*>& p : Enemy::enemies) if (p.second) p.second->draw();
+DrawScore();
 
     if (startup) DrawStartup();
     if (paused) DrawPauseScreen();
     if (gameOver) DrawGameOver();
-}
 
+}
+void Program::ManageEnemyDeath(){
+   for (std::pair<std::pair<float, float>, Enemy*>& p : Enemy::enemies)
+if (p.second && p.second->health <= 0) {
+    score += p.second->points;
+
+    while (score >= nextLifeScore && lives < 5) {
+        lives++;
+        nextLifeScore += 1000;
+    }
+
+    if (lives >= 5) {
+        nextLifeScore = INT_MAX; // cap life gain indefinitely
+    }
+
+    delete p.second;
+    p.second = nullptr;
+}
+}
 void Program::ManageEnemyRespawns() {
     delay = std::max(delay - 1, 0);
 
     respawnCooldown -= 1;
     if (respawnCooldown <= 0) {
-        respawnCooldown = 1080;
+        int baseRespawn = 1080;
+        int speedUpPer1000 = 120; // faster by 120 frames per 1000 score
+        int minRespawn = 240;
+
+        int target = baseRespawn - (score / 1000) * speedUpPer1000;
+        respawnCooldown = std::max(target, minRespawn);
+
         for (std::pair<std::pair<float, float>, Enemy*>& p : Enemy::enemies) {
             if (!p.second && p.first.second != 150) {
                 int eType = GetRandomValue(1, 3);
@@ -129,6 +162,12 @@ void Program::ManageEnemyRespawns() {
     }
 }
 
+void Program::DrawScore()
+{
+    DrawRectangle(0, 0, (float)GetScreenWidth(), (float)GetScreenHeight(), BLANK);\
+    DrawText(TextFormat("Score: %i", score), (GetScreenWidth() / 2), 75, 70, WHITE);
+}
+
 void Program::DrawStartup() {
     DrawRectangle(0, 0, (float)GetScreenWidth(), (float)GetScreenHeight(), Color{0, 0, 0, 125});
     DrawText("Galaga", (GetScreenWidth() / 2 - 237), 75, 144, WHITE);
@@ -152,6 +191,7 @@ void Program::KeyInputs() {
     if (!paused && !startup && IsKeyPressed('O')) gameOver = !gameOver;
     if (!gameOver && !paused && IsKeyPressed('I')) startup = !startup;
     if (IsKeyPressed('H')) HitBox::drawHitbox = !HitBox::drawHitbox;
+    if (IsKeyPressed('K')) score= score+300;
     
     if (gameOver && IsKeyPressed(KEY_ENTER)) {
         gameOver = false;
@@ -187,4 +227,26 @@ void Program::Reset() {
     count = 0;
     delay = 0;
     lives = 3;
+    score = 0;
+    nextLifeScore = 1000;
+
+    Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+            std::pair<float, float>{350, 150}, 
+            new SpEnemy(350, 150)
+        });
+
+    Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+            std::pair<float, float>{600, 150}, 
+            new SpEnemy(600, 150)
+        });
+
+    for (int i = 0; i < 30; i++) {
+        float x = 250 + 50 * (i % 10);
+        float y = 200 + 50 * (i / 10);
+
+        Enemy::enemies.push_back(std::pair<std::pair<float, float>, Enemy*> {
+            std::pair<float, float>{x, y}, 
+            new StdEnemy(x, y)
+        });
+    }
 }
