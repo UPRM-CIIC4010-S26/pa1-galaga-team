@@ -34,6 +34,13 @@ void Program::Update() {
     pauseFrames = std::max(pauseFrames - 1, 0);
 
     if (!startup && !paused && !gameOver && pauseFrames <= 0) {
+        SoundManager::PlayMusic();
+    } else {
+        SoundManager::PauseMusic();
+    }
+    SoundManager::UpdateMusic();
+
+    if (!startup && !paused && !gameOver && pauseFrames <= 0) {
         Enemy::ManageEnemies(player->hitBox);
         StdEnemy::attackReset();
         ManageEnemyDeath();
@@ -106,7 +113,7 @@ if (p.second && p.second->health <= 0) {
     }
 
     if (lives >= 5) {
-        nextLifeScore = INT_MAX; // cap life gain indefinitely
+        nextLifeScore = INT_MAX; 
     }
 
     delete p.second;
@@ -119,7 +126,7 @@ void Program::ManageEnemyRespawns() {
     respawnCooldown -= 1;
     if (respawnCooldown <= 0) {
         int baseRespawn = 1080;
-        int speedUpPer1000 = 120; // faster by 120 frames per 1000 score
+        int speedUpPer1000 = 120; 
         int minRespawn = 240;
 
         int target = baseRespawn - (score / 1000) * speedUpPer1000;
@@ -187,24 +194,50 @@ void Program::DrawGameOver() {
 }
 
 void Program::KeyInputs() {
-    if ((!gameOver && !startup && IsKeyPressed('P')) || (paused && IsKeyPressed(KEY_ENTER))) paused = !paused;
-    if (!paused && !startup && IsKeyPressed('O')) gameOver = !gameOver;
-    if (!gameOver && !paused && IsKeyPressed('I')) startup = !startup;
+    if ((!gameOver && !startup && IsKeyPressed('P')) || (paused && IsKeyPressed(KEY_ENTER))) {
+        paused = !paused;
+        if (paused) {
+            SoundManager::PauseMusic();
+        } else {
+            SoundManager::ResumeMusic();
+        }
+    }
+
+    if (!paused && !startup && IsKeyPressed('O')) {
+        gameOver = !gameOver;
+        if (gameOver) {
+            SoundManager::PauseMusic();
+        } else {
+            SoundManager::ResumeMusic();
+        }
+    }
+
+    if (!gameOver && !paused && IsKeyPressed('I')) {
+        startup = !startup;
+        if (!startup) {
+            SoundManager::PlayMusic();
+        } else {
+            SoundManager::PauseMusic();
+        }
+    }
+
     if (IsKeyPressed('H')) HitBox::drawHitbox = !HitBox::drawHitbox;
     if (IsKeyPressed('K')) score= score+300;
     
     if (gameOver && IsKeyPressed(KEY_ENTER)) {
         gameOver = false;
         Reset();
+        SoundManager::PlayMusic();
     }
 
     if (startup && IsKeyPressed(KEY_ENTER)) {
         startup = false;
+        SoundManager::PlayMusic();
     }
 
     if (!startup && !paused && !gameOver && pauseFrames <= 0) player->keyInputs();
-   
 }
+
 
 void Program::PlayerReset() {
     Animation::animations.push_back(
